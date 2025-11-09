@@ -24,6 +24,7 @@ def get_db():
   finally:
     db.close()
 
+#Tests to see if code can connect to db if not it retries
 def commit_or_rollback(db: Session, error_msg: str):
   try:
     db.commit()
@@ -71,6 +72,7 @@ def health():
   return {"status": "ok"}
 
 #Courses
+#Creates a course
 @app.post("/api/courses", response_model=CourseRead, status_code=201, summary="You could adddetails")
 def create_course(course: CourseCreate, db: Session = Depends(get_db)):
   db_course = CourseDB(**course.model_dump())
@@ -79,12 +81,14 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
   db.refresh(db_course)
   return db_course
 
+#Gets the courses
 @app.get("/api/courses", response_model=list[CourseRead])
 def list_courses(limit: int = 10, offset: int = 0, db: Session = Depends(get_db)):
   stmt = select(CourseDB).order_by(CourseDB.id).limit(limit).offset(offset)
   return db.execute(stmt).scalars().all()
 
 #Projects
+#Creates a project
 @app.post("/api/projects", response_model=ProjectRead, status_code=201)
 def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     user = db.get(UserDB, project.owner_id)
@@ -181,6 +185,7 @@ def get_user_projects(user_id: int, db: Session = Depends(get_db)):
   return rows
   #return db.execute(stmt).scalars().all()
 
+#Creates a specific user project 
 @app.post("/api/users/{user_id}/projects", response_model=ProjectRead, status_code=201)
 def create_user_project(user_id: int, project: ProjectCreateForUser, db: Session =
 Depends(get_db)):
@@ -208,6 +213,7 @@ def list_users(db: Session = Depends(get_db)):
   return users
   #return list(db.execute(stmt).scalars())
 
+#Gets all users
 @app.get("/api/users/{user_id}", response_model=UserRead)
 def get_user(user_id: int, db: Session = Depends(get_db)):
   user = db.get(UserDB, user_id)
@@ -215,6 +221,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="User not found")
   return user
 
+#Creates Users
 @app.post("/api/users", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def add_user(payload: UserCreate, db: Session = Depends(get_db)):
   user = UserDB(**payload.model_dump())
